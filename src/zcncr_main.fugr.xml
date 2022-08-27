@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <AREAT>Main Concurrency Function Group</AREAT>
+   <INCLUDES>
+    <SOBJ_NAME>LZCNCR_MAINTOP</SOBJ_NAME>
+    <SOBJ_NAME>SAPLZCNCR_MAIN</SOBJ_NAME>
+   </INCLUDES>
+   <FUNCTIONS>
+    <item>
+     <FUNCNAME>ZCNCR_TASK_ASYNC</FUNCNAME>
+     <REMOTE_CALL>X</REMOTE_CALL>
+     <SHORT_TEXT>FM Async Task</SHORT_TEXT>
+     <REMOTE_BASXML>X</REMOTE_BASXML>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IO_SERIALIZED</PARAMETER>
+       <TYP>STRING</TYP>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>EO_SERIALIZED</PARAMETER>
+       <TYP>STRING</TYP>
+      </RSEXP>
+      <RSEXP>
+       <PARAMETER>ES_MESSAGE</PARAMETER>
+       <TYP>BAPIRET2</TYP>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IO_SERIALIZED</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>EO_SERIALIZED</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>ES_MESSAGE</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+   </FUNCTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
