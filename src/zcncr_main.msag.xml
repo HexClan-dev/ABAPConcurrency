@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZCNCR_MAIN</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>ABAP Concurrency Messages</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>Error while Serializing Class &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>Error while De-serializing Class &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>010</MSGNR>
+     <TEXT>Error While checking GROUP &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>020</MSGNR>
+     <TEXT>Error in the background job &amp;1</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>
