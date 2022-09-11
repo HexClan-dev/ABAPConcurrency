@@ -22,11 +22,14 @@ CLASS zcl_cncr_async_task DEFINITION
       RAISING   zcx_cncr_exception.
 
     EVENTS: at_end_thread EXPORTING
-        VALUE(et_bapiret)  TYPE        bapiret2_t          OPTIONAL
-        VALUE(eo_runnable) TYPE REF TO zif_cncr_runnable OPTIONAL.
+        VALUE(et_bapiret)   TYPE        bapiret2_t          OPTIONAL
+        VALUE(eo_runnable)  TYPE REF TO zif_cncr_runnable OPTIONAL
+        VALUE(ev_task_name) TYPE zif_cncr_runnable=>ty_char32 OPTIONAL.
 
     EVENTS: at_end_thread_failed EXPORTING
-        VALUE(et_bapiret)  TYPE        bapiret2_t          OPTIONAL.
+        VALUE(et_bapiret)   TYPE bapiret2_t                   OPTIONAL
+        VALUE(ev_task_name) TYPE zif_cncr_runnable=>ty_char32 OPTIONAL.
+
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -55,6 +58,7 @@ CLASS zcl_cncr_async_task DEFINITION
       RAISING   zcx_cncr_exception.
 
     DATA: mo_runnable   TYPE REF TO zif_cncr_runnable.
+    DATA: mv_task_name TYPE zif_cncr_runnable=>ty_char32.
 
 ENDCLASS.
 
@@ -69,6 +73,7 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
 
 
   METHOD run.
+    me->mv_task_name = iv_task_name.
 
     DATA(lo_serialized) = zcl_cncr_thread=>serialize( io_runnable = me->mo_runnable ).
 
@@ -166,13 +171,13 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
       MESSAGE e020(zcncr_main) INTO zcx_cncr_exception=>mv_msg_text.
       " Convert the message into bapiret structure
       APPEND zcx_cncr_exception=>get_bapiret2( ) TO lt_bapiret.
-      RAISE EVENT at_end_thread_failed EXPORTING et_bapiret = lt_bapiret.
+      RAISE EVENT at_end_thread_failed EXPORTING et_bapiret = lt_bapiret ev_task_name = me->mv_task_name.
       RETURN.
     ENDIF.
 
     " Update the runnable instance
     me->mo_runnable = zcl_cncr_thread=>deserialize( io_serialized = lo_serialized ).
-    RAISE EVENT at_end_thread EXPORTING eo_runnable = me->mo_runnable.
+    RAISE EVENT at_end_thread EXPORTING eo_runnable = me->mo_runnable ev_task_name = me->mv_task_name.
   ENDMETHOD.
 
 ENDCLASS.

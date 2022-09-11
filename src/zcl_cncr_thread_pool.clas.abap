@@ -10,6 +10,7 @@ CLASS zcl_cncr_thread_pool DEFINITION
              waiting,
              stopped,
              failed,
+             finished,
            END OF ENUM thread_status.
 
     TYPES: BEGIN OF lty_s_server_grp,
@@ -44,11 +45,15 @@ CLASS zcl_cncr_thread_pool DEFINITION
     METHODS at_end_process FOR EVENT at_end_thread OF zcl_cncr_async_task
       IMPORTING
         eo_runnable
-        et_bapiret.
+        et_bapiret
+        ev_task_name.
 
     METHODS at_end_process_failed FOR EVENT at_end_thread_failed OF zcl_cncr_async_task
       IMPORTING
-        et_bapiret.
+        et_bapiret
+        ev_task_name.
+
+    METHODS: wait_for_all.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -60,7 +65,7 @@ CLASS zcl_cncr_thread_pool DEFINITION
 
     DATA: ms_server_group  TYPE lty_s_server_grp.
     DATA: mt_runnable      TYPE lty_t_runnable.
-    DATA: mv_thread_count  TYPE i VALUE 0.
+    DATA: mv_nr_running_threads  TYPE i VALUE 0.
     DATA: mv_max_thread    TYPE i VALUE 0.
 
 
@@ -73,8 +78,12 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
   METHOD constructor.
     " Get best server group available
     me->ms_server_group = me->get_server_group( iv_max_processes ).
-    me->mv_max_thread   = iv_max_processes.
 
+    IF iv_max_processes IS SUPPLIED.
+      me->mv_max_thread   = iv_max_processes.
+    ELSE.
+      me->mv_max_thread = me->ms_server_group-max_pbt_wps.
+    ENDIF.
   ENDMETHOD.
 
   METHOD get_server_group.
@@ -123,26 +132,28 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
   METHOD add_thread.
 
     DATA: ls_runnable LIKE LINE OF me->mt_runnable.
-    TRY.
-        DATA(lv_task_id) = cl_system_uuid=>create_uuid_c32_static( ).
-      CATCH  cx_uuid_error.
-        " If this fails use some radim
-        lv_task_id = 'TASK' && me->mv_thread_count.
-    ENDTRY.
+
+    DATA(lv_tab_count) = lines( me->mt_runnable ).
 
     IF iv_thread_name IS SUPPLIED.
       ls_runnable-thread_name = iv_thread_name.
     ELSE.
+      TRY.
+          DATA(lv_task_id) = cl_system_uuid=>create_uuid_c32_static( ).
+        CATCH  cx_uuid_error.
+          " If this fails use the counter value
+          lv_task_id = 'TASK' && lv_tab_count.
+      ENDTRY.
+
       ls_runnable-thread_name = lv_task_id.
     ENDIF.
 
     ls_runnable-thread_group = me->ms_server_group-thread_group.
-    ls_runnable-que_nr = me->mv_thread_count.
+    ls_runnable-que_nr = lv_tab_count.
     ls_runnable-runnable = io_runnable.
     ls_runnable-status   = waiting.
     APPEND ls_runnable TO me->mt_runnable.
 
-    me->mv_thread_count = me->mv_thread_count + 1.
   ENDMETHOD.
 
   METHOD execute.
@@ -151,11 +162,10 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
         ASSIGNING FIELD-SYMBOL(<ls_runnable>).
 
 
-      IF me->mv_thread_count >= me->ms_server_group-free_pbt_wps OR
-         me->mv_thread_count >= me->mv_max_thread.
-        WAIT UNTIL me->mv_thread_count < me->mv_max_thread OR
-                   me->mv_thread_count < me->ms_server_group-free_pbt_wps.
-        CONTINUE.
+      IF me->mv_nr_running_threads >= me->ms_server_group-free_pbt_wps OR
+         ( me->mv_nr_running_threads >= me->mv_max_thread AND
+           me->mv_max_thread <> 0 ).
+        WAIT UNTIL me->mv_nr_running_threads < me->mv_max_thread.
       ENDIF.
 
       TRY.
@@ -167,22 +177,25 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
           SET HANDLER me->at_end_process        FOR lo_runnable.
           SET HANDLER me->at_end_process_failed FOR lo_runnable.
 
-
           DATA(lv_is_running) = lo_runnable->run( iv_task_name = <ls_runnable>-thread_name iv_group = <ls_runnable>-thread_group ).
 
           IF lv_is_running = abap_true.
             <ls_runnable>-status = running.
+            me->mv_nr_running_threads = me->mv_nr_running_threads + 1.
           ELSE.
             <ls_runnable>-status = failed.
           ENDIF.
 
         CATCH cx_uuid_error INTO DATA(lx_uuid_error).
           APPEND VALUE #( message = lx_uuid_error->err_text type = 'E' ) TO <ls_runnable>-messages.
+          <ls_runnable>-status = failed.
 
         CATCH zcx_cncr_exception INTO DATA(lx_error).
           APPEND lx_error->get_bapireturn( ) TO <ls_runnable>-messages.
+          <ls_runnable>-status = failed.
 
       ENDTRY.
+
     ENDLOOP.
 
 
@@ -190,28 +203,42 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
 
 
   METHOD at_end_process.
+
+    READ TABLE me->mt_runnable WITH KEY thread_name = ev_task_name ASSIGNING FIELD-SYMBOL(<ls_runnable>).
+
+    CHECK sy-subrc = 0.
+
     " This is ending the process
-*    me->mv_is_running = abap_false.
-*
-*    APPEND LINES OF et_bapiret TO me->mt_messages.
-*
-*    " Measure the execution time of the execution
-*    me->end_execution_time( ).
-*
-*    IF eo_runnable IS NOT INITIAL.
-*      " Update the Runnable instance
-*      me->mo_runnable = eo_runnable.
-*    ENDIF.
+    <ls_runnable>-status = finished.
+    APPEND LINES OF et_bapiret TO <ls_runnable>-messages.
+
+    IF eo_runnable IS NOT INITIAL.
+      " Update the Runnable instance
+      <ls_runnable>-runnable = eo_runnable.
+    ENDIF.
+
+    me->mv_nr_running_threads = me->mv_nr_running_threads - 1.
+
   ENDMETHOD.
 
   METHOD at_end_process_failed.
-*    " This is ending the process
-*    me->mv_is_running = abap_false.
-*
-*    APPEND LINES OF et_bapiret TO me->mt_messages.
-*
+
+    READ TABLE me->mt_runnable WITH KEY thread_name = ev_task_name ASSIGNING FIELD-SYMBOL(<ls_runnable>).
+
+    CHECK sy-subrc = 0.
+
+    " This is ending the process
+    <ls_runnable>-status = failed.
+    APPEND LINES OF et_bapiret TO <ls_runnable>-messages.
+
+    me->mv_nr_running_threads = me->mv_nr_running_threads - 1.
+
 *    " Measure the execution time of the execution
 *    me->end_execution_time( ).
+  ENDMETHOD.
+
+  METHOD wait_for_all.
+    WAIT UNTIL me->mv_nr_running_threads = 0.
   ENDMETHOD.
 
 ENDCLASS.
