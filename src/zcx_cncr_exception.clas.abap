@@ -19,6 +19,10 @@ CLASS zcx_cncr_exception DEFINITION
         RAISING
           zcx_cncr_exception .
 
+    CLASS-METHODS:
+      get_bapiret2
+        RETURNING VALUE(rs_bapiret) TYPE bapiret2.
+
     METHODS:
       get_bapireturn
         RETURNING VALUE(rs_return) TYPE bapiret2.
@@ -75,6 +79,22 @@ CLASS zcx_cncr_exception IMPLEMENTATION.
     lo_exception->if_t100_dyn_msg~msgv3         = sy-msgv3.
     lo_exception->if_t100_dyn_msg~msgv4         = sy-msgv4.
     RAISE EXCEPTION lo_exception.
+
+  ENDMETHOD.
+
+  METHOD get_bapiret2.
+
+    CALL FUNCTION 'BALW_BAPIRETURN_GET2'
+      EXPORTING
+        type   = sy-msgty
+        cl     = sy-msgid
+        number = sy-msgno
+        par1   = sy-msgv1
+        par2   = sy-msgv2
+        par3   = sy-msgv3
+        par4   = sy-msgv4
+      IMPORTING
+        return = rs_bapiret.
 
   ENDMETHOD.
 

@@ -1,35 +1,43 @@
 CLASS zcl_cncr_thread DEFINITION
   PUBLIC
-  CREATE PUBLIC .
+  CREATE PUBLIC.
 
   PUBLIC SECTION.
 
     CONSTANTS: gc_default_group TYPE rzllitab-classname VALUE 'parallel_generators'.
 
+    INTERFACES: zif_cncr_runnable.
+
     METHODS constructor
       IMPORTING
-        io_runnable TYPE REF TO zif_cncr_runnable.
+        io_runnable TYPE REF TO zif_cncr_runnable OPTIONAL.
 
-    METHODS start
+    METHODS start FINAL
       RETURNING VALUE(rs_errors) TYPE bapiret2
       RAISING   zcx_cncr_exception.
 
-    METHODS wait
+    METHODS wait FINAL
       IMPORTING
         iv_seconds TYPE i OPTIONAL.
 
-    METHODS kill_process
+    METHODS kill_process FINAL
       RETURNING VALUE(rv_is_stopped) TYPE abap_bool.
 
-
-    METHODS get_result
+    METHODS get_result  FINAL
       RETURNING VALUE(ro_runnable) TYPE REF TO zif_cncr_runnable.
 
-
-    METHODS at_end_process FOR EVENT at_end_thread OF zcl_cncr_async_task
+    METHODS at_end_process  FINAL FOR EVENT at_end_thread OF zcl_cncr_async_task
       IMPORTING
         eo_runnable
-        es_bapiret.
+        et_bapiret.
+
+    METHODS at_end_process_failed  FINAL FOR EVENT at_end_thread_failed OF zcl_cncr_async_task
+      IMPORTING
+        et_bapiret.
+
+    METHODS: get_execution_time  FINAL
+      RETURNING VALUE(rv_execution_time) TYPE i
+      RAISING   zcx_cncr_exception.
 
     CLASS-METHODS serialize
       IMPORTING io_runnable          TYPE REF TO zif_cncr_runnable
@@ -42,13 +50,23 @@ CLASS zcl_cncr_thread DEFINITION
       RAISING   zcx_cncr_exception.
 
     DATA: mv_is_running TYPE abap_bool VALUE abap_false.
-    DATA: ms_bapiret TYPE bapiret2.
+    DATA: mt_messages TYPE TABLE OF bapiret2 READ-ONLY.
+
 
   PROTECTED SECTION.
   PRIVATE SECTION.
 
     DATA: mo_runnable TYPE REF TO zif_cncr_runnable.
+    DATA: mv_execution_time TYPE i.
 
+    DATA: mo_exec_time  TYPE REF TO if_abap_runtime,
+          mv_start_time TYPE i,
+          mv_end_time   TYPE i.
+
+
+    METHODS start_execution_time.
+
+    METHODS end_execution_time.
 
 ENDCLASS.
 
@@ -57,26 +75,37 @@ ENDCLASS.
 CLASS zcl_cncr_thread IMPLEMENTATION.
 
   METHOD constructor.
-    me->mo_runnable = io_runnable.
+    IF io_runnable IS SUPPLIED.
+      me->mo_runnable = io_runnable.
+    ELSE.
+      me->mo_runnable = me.
+    ENDIF.
+
+    " Create ABAP runtime time measurement
+    me->mo_exec_time = cl_abap_runtime=>create_hr_timer( ).
   ENDMETHOD.
 
   METHOD start.
     TRY.
-        DATA(lo_runnable) = NEW zcl_cncr_async_task( io_runnable = me->mo_runnable ).
+        DATA(lo_runnable) = NEW zcl_cncr_async_task(
+            io_runnable = me->mo_runnable
+        ).
 
         " Register the Event handler
-        SET HANDLER me->at_end_process FOR lo_runnable.
+        SET HANDLER me->at_end_process        FOR lo_runnable.
+        SET HANDLER me->at_end_process_failed FOR lo_runnable.
 
         DATA(lv_task_id) = cl_system_uuid=>create_uuid_c32_static( ).
 
+        me->start_execution_time( ).
         me->mv_is_running = lo_runnable->run( iv_task_name = lv_task_id ).
 
       CATCH cx_uuid_error INTO DATA(lx_uuid_error).
-        rs_errors = VALUE #( message = lx_uuid_error->err_text type = 'E' ).
+        APPEND VALUE #( message = lx_uuid_error->err_text type = 'E' ) TO me->mt_messages.
 
       CATCH zcx_cncr_exception INTO DATA(lx_error).
-        "Raise ZCX_CNCR_* Error
-        rs_errors = lx_error->get_bapireturn( ).
+        APPEND lx_error->get_bapireturn( ) TO me->mt_messages.
+
     ENDTRY.
 
   ENDMETHOD.
@@ -84,6 +113,8 @@ CLASS zcl_cncr_thread IMPLEMENTATION.
 
   METHOD kill_process.
     " TODO -> implement process killing with shared memory
+
+
   ENDMETHOD.
 
 
@@ -115,12 +146,36 @@ CLASS zcl_cncr_thread IMPLEMENTATION.
   METHOD at_end_process.
     " This is ending the process
     me->mv_is_running = abap_false.
-    me->ms_bapiret = es_bapiret.
+
+    APPEND LINES OF et_bapiret TO me->mt_messages.
+
+    " Measure the execution time of the execution
+    me->end_execution_time( ).
 
     IF eo_runnable IS NOT INITIAL.
       " Update the Runnable instance
       me->mo_runnable = eo_runnable.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD at_end_process_failed.
+    " This is ending the process
+    me->mv_is_running = abap_false.
+
+    APPEND LINES OF et_bapiret TO me->mt_messages.
+
+    " Measure the execution time of the execution
+    me->end_execution_time( ).
+  ENDMETHOD.
+
+
+  METHOD get_execution_time.
+*    IF mo_exec_time IS NOT BOUND.
+*      MESSAGE e015(zcncr_main) INTO zcx_cncr_exception=>mv_msg_text.
+*      zcx_cncr_exception=>s_raise( ).
+*    ENDIF.
+
+    rv_execution_time = me->mv_end_time - me->mv_start_time.
   ENDMETHOD.
 
   METHOD wait.
@@ -131,12 +186,29 @@ CLASS zcl_cncr_thread IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+
+  METHOD start_execution_time.
+    me->mv_start_time = me->mo_exec_time->get_runtime( ).
+  ENDMETHOD.
+
+  METHOD end_execution_time.
+    me->mv_end_time = me->mo_exec_time->get_runtime( ).
+  ENDMETHOD.
+
+
   METHOD get_result.
     IF me->mv_is_running = abap_true.
       me->wait( ).
     ENDIF.
 
     ro_runnable = me->mo_runnable.
+  ENDMETHOD.
+
+  METHOD zif_cncr_runnable~run.
+    DATA(lv_class_name) = cl_abap_classdescr=>get_class_name( me ).
+
+    MESSAGE e016(zcncr_main) WITH lv_class_name INTO zcx_cncr_exception=>mv_msg_text.
+    zcx_cncr_exception=>s_raise( ).
   ENDMETHOD.
 
 ENDCLASS.

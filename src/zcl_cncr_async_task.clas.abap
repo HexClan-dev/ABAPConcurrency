@@ -22,8 +22,11 @@ CLASS zcl_cncr_async_task DEFINITION
       RAISING   zcx_cncr_exception.
 
     EVENTS: at_end_thread EXPORTING
-        VALUE(es_bapiret)  TYPE        bapiret2          OPTIONAL
+        VALUE(et_bapiret)  TYPE        bapiret2_t          OPTIONAL
         VALUE(eo_runnable) TYPE REF TO zif_cncr_runnable OPTIONAL.
+
+    EVENTS: at_end_thread_failed EXPORTING
+        VALUE(et_bapiret)  TYPE        bapiret2_t          OPTIONAL.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -51,8 +54,7 @@ CLASS zcl_cncr_async_task DEFINITION
       RETURNING VALUE(rv_is_running) TYPE abap_bool
       RAISING   zcx_cncr_exception.
 
-    DATA: mo_runnable  TYPE REF TO zif_cncr_runnable,
-          mo_exec_time TYPE REF TO if_abap_runtime.
+    DATA: mo_runnable   TYPE REF TO zif_cncr_runnable.
 
 ENDCLASS.
 
@@ -63,8 +65,6 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
   METHOD constructor.
     me->mo_runnable  = io_runnable.
 
-    " Create ABAP runtime time measurement
-    me->mo_exec_time = cl_abap_runtime=>create_hr_timer( ).
   ENDMETHOD.
 
 
@@ -122,19 +122,25 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
 
 
   METHOD run_rfc.
+    TRY.
+        CALL FUNCTION 'ZCNCR_TASK_ASYNC'
+          STARTING NEW TASK iv_task_name
+          CALLING at_end_process ON END OF TASK
+          EXPORTING
+            io_serialized = io_serialized
+          EXCEPTIONS
+            OTHERS        = 1.
 
-    CALL FUNCTION 'ZCNCR_TASK_ASYNC'
-      STARTING NEW TASK iv_task_name
-      CALLING at_end_process ON END OF TASK
-      EXPORTING
-        io_serialized = io_serialized
-      EXCEPTIONS
-        OTHERS        = 1.
+        IF sy-subrc = 0.
+          rv_is_running = abap_true.
+        ENDIF.
 
-    IF sy-subrc = 0.
-      rv_is_running = abap_true.
-    ENDIF.
-
+      CATCH zcx_cncr_exception INTO DATA(lx_error).
+        RAISE EVENT at_end_thread_failed
+            EXPORTING
+                et_bapiret = VALUE bapiret2_t( ( lx_error->get_bapireturn( ) ) ) .
+        rv_is_running = abap_false.
+    ENDTRY.
   ENDMETHOD.
 
 
@@ -161,7 +167,8 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
   METHOD at_end_process.
 
     DATA: lo_serialized TYPE string.
-    DATA: ls_bapiret TYPE bapiret2.
+    DATA: lt_bapiret TYPE bapiret2_t,
+          ls_bapiret TYPE bapiret2.
 
     RECEIVE RESULTS FROM FUNCTION 'ZCNCR_TASK_ASYNC'
       IMPORTING
@@ -173,10 +180,14 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
         communication_failure = 3
         OTHERS = 4.
 
+    APPEND ls_bapiret TO lt_bapiret.
+
     IF sy-subrc <> 0 OR lo_serialized IS INITIAL.
-      RAISE EVENT at_end_thread EXPORTING es_bapiret = ls_bapiret.
       MESSAGE e020(zcncr_main) INTO zcx_cncr_exception=>mv_msg_text.
-      zcx_cncr_exception=>s_raise( ).
+      " Convert the message into bapiret structure
+      APPEND zcx_cncr_exception=>get_bapiret2( ) TO lt_bapiret.
+      RAISE EVENT at_end_thread_failed EXPORTING et_bapiret = lt_bapiret.
+      RETURN.
     ENDIF.
 
     " Update the runnable instance

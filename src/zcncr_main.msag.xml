@@ -29,6 +29,18 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>015</MSGNR>
+     <TEXT>Execution Time Measurements is not defined</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>016</MSGNR>
+     <TEXT>No Implementation was defined for Thread class &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
      <MSGNR>020</MSGNR>
      <TEXT>Error in the background job &amp;1</TEXT>
     </T100>
