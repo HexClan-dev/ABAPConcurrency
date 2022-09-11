@@ -88,17 +88,9 @@ START-OF-SELECTION.
   lo_runn3->mv_fibonaci = 37.
   DATA(lo_thread3) = NEW zcl_cncr_thread( lo_runn3 ).
 
-*  DATA(lo_runn4) = NEW lcl_main( ).
-*  lo_runn4->mv_fibonaci = 37.
-*  DATA(lo_thread4) = NEW zcl_cncr_thread( lo_runn4 ).
-
   lo_thread->start( ).
-
   lo_thread2->start( ).
-
   lo_thread3->start( ).
-
-*  lo_thread4->start( ).
 
   lo_runn1 ?= lo_thread->get_result( ).
   WRITE: 'The process ended successfully!'.
@@ -121,8 +113,7 @@ START-OF-SELECTION.
 
   DATA(lv_exec_time) = lo_exec_time->get_runtime( ) - lv_start_time.
 
-*  lo_runn4 ?= lo_thread4->get_result( ).
-*  WRITE: /, 'Fibonaci sequence 4 is ', lo_runn4->mv_value.
+
   DATA(lv_thread_exec_time) = lo_thread->get_execution_time( ) + lo_thread2->get_execution_time( ) + lo_thread3->get_execution_time( ).
   WRITE: /, 'Total Sum Thread Execution Time : ',
             lv_thread_exec_time .

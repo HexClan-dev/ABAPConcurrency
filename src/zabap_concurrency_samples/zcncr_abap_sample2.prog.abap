@@ -9,6 +9,7 @@ REPORT zcncr_abap_sample2.
 CLASS lcl_main DEFINITION INHERITING FROM zcl_cncr_thread CREATE PUBLIC.
 
   PUBLIC SECTION.
+
     METHODS: calculate_fibonaci
       IMPORTING
                 VALUE(iv_index)       TYPE  i
@@ -89,7 +90,6 @@ START-OF-SELECTION.
       lo_runn1->start( ).
       lo_runn2->start( ).
       lo_runn3->start( ).
-
 
       lo_result_main ?= lo_runn1->get_result( ).
       WRITE: 'The process ended successfully!'.
