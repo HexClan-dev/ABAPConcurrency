@@ -9,4 +9,4 @@ REPORT zcncr_abap_sample3.
 START-OF-SELECTION.
 
 
-data(lo_thread_pool) = new zcl_cncr_thread_pool( 4  ).
+data(lo_thread_pool) = new zcl_cncr_thread_pool( ).

@@ -69,36 +69,16 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
 
 
   METHOD run.
-    DATA: lv_max_pbt_wps  TYPE i,
-          lv_free_pbt_wps TYPE i.
-    DO.
 
-      IF iv_group IS NOT INITIAL.
-        me->get_process_info(
-           EXPORTING
-             iv_group        = iv_group
-           IMPORTING
-             ev_max_pbt_wps  = lv_max_pbt_wps
-             ev_free_pbt_wps = lv_free_pbt_wps
-         ).
+    DATA(lo_serialized) = zcl_cncr_thread=>serialize( io_runnable = me->mo_runnable ).
 
-        IF lv_free_pbt_wps = 0 AND lv_max_pbt_wps > 0.
-          WAIT UP TO 2 SECONDS.
-          CONTINUE.
-        ENDIF.
-      ENDIF.
+    IF iv_group IS INITIAL.
+      rv_is_running =  me->run_rfc( io_serialized = lo_serialized   iv_task_name  = iv_task_name ).
+    ELSE.
+      rv_is_running =  me->run_rfc_with_group( io_serialized = lo_serialized  iv_task_name  = iv_task_name iv_group = iv_group ).
+    ENDIF.
 
-      DATA(lo_serialized) = zcl_cncr_thread=>serialize( io_runnable = me->mo_runnable ).
-
-      IF iv_group IS INITIAL.
-        rv_is_running =  me->run_rfc( io_serialized = lo_serialized   iv_task_name  = iv_task_name ).
-      ELSE.
-        rv_is_running =  me->run_rfc_with_group( io_serialized = lo_serialized  iv_task_name  = iv_task_name iv_group = iv_group ).
-      ENDIF.
-
-      IF rv_is_running = abap_true. EXIT. ENDIF.
-
-    ENDDO.
+    IF rv_is_running = abap_true. EXIT. ENDIF.
 
   ENDMETHOD.
 
