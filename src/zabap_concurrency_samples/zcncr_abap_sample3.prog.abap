@@ -75,13 +75,13 @@ START-OF-SELECTION.
   DATA(lo_thread_pool) = NEW zcl_cncr_thread_pool( 2 ).
 
   DATA(lo_test_f1) = NEW lcl_main( ).
-  lo_test_f1->mv_value = 35.
+  lo_test_f1->mv_value = 20.
   DATA(lo_test_f2) = NEW lcl_main( ).
   lo_test_f2->mv_value = 36.
   DATA(lo_test_f3) = NEW lcl_main( ).
-  lo_test_f3->mv_value = 37.
+  lo_test_f3->mv_value = 38.
 
-  lo_thread_pool->add_thread(
+  DATA(lv_thread_name1) = lo_thread_pool->add_thread(
       io_runnable    = lo_test_f1
   ).
 
@@ -90,10 +90,21 @@ START-OF-SELECTION.
   ).
 
   lo_thread_pool->add_thread(
+      iv_thread_name = 'Thread3'
       io_runnable    = lo_test_f3
   ).
 
+  BREAK-POINT.
 
   lo_thread_pool->execute( ).
 
-  lo_thread_pool->wait_for_all( ).
+*  lo_thread_pool->wait_for_all( ).
+
+  lo_thread_pool->wait_for(
+    EXPORTING
+      iv_thread_name = lv_thread_name1
+      iv_status      = zcl_cncr_thread_pool=>finished
+  ).
+
+  BREAK-POINT.
+  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).

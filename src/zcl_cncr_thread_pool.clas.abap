@@ -37,8 +37,9 @@ CLASS zcl_cncr_thread_pool DEFINITION
 
     METHODS add_thread
       IMPORTING
-        iv_thread_name TYPE zif_cncr_runnable=>ty_char32 OPTIONAL
-        io_runnable    TYPE REF TO zif_cncr_runnable.
+                iv_thread_name        TYPE zif_cncr_runnable=>ty_char32 OPTIONAL
+                io_runnable           TYPE REF TO zif_cncr_runnable
+      RETURNING VALUE(rv_thread_name) TYPE zif_cncr_runnable=>ty_char32.
 
     METHODS execute.
 
@@ -55,6 +56,13 @@ CLASS zcl_cncr_thread_pool DEFINITION
 
     METHODS: wait_for_all.
 
+    METHODS: wait_for
+      IMPORTING
+        iv_thread_name TYPE zif_cncr_runnable=>ty_char32
+        iv_status      TYPE thread_status DEFAULT finished.
+
+    DATA: mt_runnable      TYPE lty_t_runnable.
+
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -64,7 +72,6 @@ CLASS zcl_cncr_thread_pool DEFINITION
       RETURNING VALUE(rs_server_group) TYPE lty_s_server_grp.
 
     DATA: ms_server_group  TYPE lty_s_server_grp.
-    DATA: mt_runnable      TYPE lty_t_runnable.
     DATA: mv_nr_running_threads  TYPE i VALUE 0.
     DATA: mv_max_thread    TYPE i VALUE 0.
 
@@ -154,6 +161,8 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
     ls_runnable-status   = waiting.
     APPEND ls_runnable TO me->mt_runnable.
 
+    rv_thread_name = ls_runnable-thread_name.
+
   ENDMETHOD.
 
   METHOD execute.
@@ -240,5 +249,14 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
   METHOD wait_for_all.
     WAIT UNTIL me->mv_nr_running_threads = 0.
   ENDMETHOD.
+
+  METHOD wait_for.
+  data(ls_runnable) = me->mt_runnable[ thread_name = iv_thread_name ].
+    WAIT UNTIL ls_runnable-status = iv_status or
+        ls_runnable-status = failed or
+        ls_runnable-status = finished or
+        ls_runnable-status = stopped.
+  ENDMETHOD.
+
 
 ENDCLASS.
