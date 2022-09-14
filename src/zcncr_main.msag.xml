@@ -41,6 +41,12 @@
     <T100>
      <SPRSL>E</SPRSL>
      <ARBGB>ZCNCR_MAIN</ARBGB>
+     <MSGNR>017</MSGNR>
+     <TEXT>Thread &amp;1 does not exist</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCNCR_MAIN</ARBGB>
      <MSGNR>020</MSGNR>
      <TEXT>Error in the background job &amp;1</TEXT>
     </T100>

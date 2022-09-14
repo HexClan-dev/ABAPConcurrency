@@ -94,12 +94,9 @@ START-OF-SELECTION.
       io_runnable    = lo_test_f3
   ).
 
-  BREAK-POINT.
-
   lo_thread_pool->execute( ).
 
 *  lo_thread_pool->wait_for_all( ).
-
   lo_thread_pool->wait_for(
     EXPORTING
       iv_thread_name = lv_thread_name1
@@ -107,4 +104,4 @@ START-OF-SELECTION.
   ).
 
   BREAK-POINT.
-  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).
+*  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).

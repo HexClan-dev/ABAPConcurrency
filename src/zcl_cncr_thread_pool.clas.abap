@@ -58,8 +58,9 @@ CLASS zcl_cncr_thread_pool DEFINITION
 
     METHODS: wait_for
       IMPORTING
-        iv_thread_name TYPE zif_cncr_runnable=>ty_char32
-        iv_status      TYPE thread_status DEFAULT finished.
+                iv_thread_name TYPE zif_cncr_runnable=>ty_char32
+                iv_status      TYPE thread_status DEFAULT finished
+      RAISING   zcx_cncr_exception.
 
     DATA: mt_runnable      TYPE lty_t_runnable.
 
@@ -251,11 +252,16 @@ CLASS zcl_cncr_thread_pool IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD wait_for.
-  data(ls_runnable) = me->mt_runnable[ thread_name = iv_thread_name ].
-    WAIT UNTIL ls_runnable-status = iv_status or
-        ls_runnable-status = failed or
-        ls_runnable-status = finished or
-        ls_runnable-status = stopped.
+    TRY.
+        DATA(ls_runnable) = me->mt_runnable[ thread_name = iv_thread_name ].
+        WAIT UNTIL ls_runnable-status = iv_status OR
+            ls_runnable-status = failed OR
+            ls_runnable-status = finished OR
+            ls_runnable-status = stopped.
+      CATCH  cx_sy_itab_line_not_found.
+        MESSAGE e017(zcncr_main) WITH iv_thread_name INTO zcx_cncr_exception=>mv_msg_text.
+        zcx_cncr_exception=>s_raise( ).
+    ENDTRY.
   ENDMETHOD.
 
 
