@@ -72,14 +72,14 @@ ENDCLASS.
 
 START-OF-SELECTION.
 
-  DATA(lo_thread_pool) = NEW zcl_cncr_thread_pool( 2 ).
+  DATA(lo_thread_pool) = NEW zcl_cncr_thread_pool( 3 ).
 
   DATA(lo_test_f1) = NEW lcl_main( ).
-  lo_test_f1->mv_value = 20.
+  lo_test_f1->mv_value = 40.
   DATA(lo_test_f2) = NEW lcl_main( ).
   lo_test_f2->mv_value = 36.
   DATA(lo_test_f3) = NEW lcl_main( ).
-  lo_test_f3->mv_value = 38.
+  lo_test_f3->mv_value = 40.
 
   DATA(lv_thread_name1) = lo_thread_pool->add_thread(
       io_runnable    = lo_test_f1

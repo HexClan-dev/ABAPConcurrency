@@ -1,0 +1,4 @@
+INTERFACE zif_runnable
+  PUBLIC .
+
+ENDINTERFACE.
