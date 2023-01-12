@@ -5,6 +5,7 @@
    <PROGDIR>
     <NAME>ZCNCR_ABAP_SAMPLE2</NAME>
     <DBAPL>S</DBAPL>
+    <DBNA>D$</DBNA>
     <SUBC>1</SUBC>
     <FIXPT>X</FIXPT>
     <LDBNAME>D$S</LDBNAME>
@@ -13,8 +14,8 @@
    <TPOOL>
     <item>
      <ID>R</ID>
-     <ENTRY>Non concurrency sample 2</ENTRY>
-     <LENGTH>24</LENGTH>
+     <ENTRY>Concurrency sample 2 with Inheritance</ENTRY>
+     <LENGTH>37</LENGTH>
     </item>
    </TPOOL>
   </asx:values>

@@ -9,6 +9,22 @@
    </INCLUDES>
    <FUNCTIONS>
     <item>
+     <FUNCNAME>ZCNCR_BACKGROUND_ASYNC</FUNCNAME>
+     <SHORT_TEXT>ABAP Background Async</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IO_SERIALIZED</PARAMETER>
+       <TYP>STRING</TYP>
+      </RSIMP>
+     </IMPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IO_SERIALIZED</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
      <FUNCNAME>ZCNCR_TASK_ASYNC</FUNCNAME>
      <REMOTE_CALL>X</REMOTE_CALL>
      <SHORT_TEXT>FM Async Task</SHORT_TEXT>

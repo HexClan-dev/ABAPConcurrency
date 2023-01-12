@@ -1,0 +1,14 @@
+CLASS zcl_cncr_async_background_job DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+
+CLASS zcl_cncr_async_background_job IMPLEMENTATION.
+ENDCLASS.

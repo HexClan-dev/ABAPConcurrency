@@ -107,7 +107,6 @@ CLASS zcl_cncr_thread IMPLEMENTATION.
         APPEND lx_error->get_bapireturn( ) TO me->mt_messages.
 
     ENDTRY.
-
   ENDMETHOD.
 
 

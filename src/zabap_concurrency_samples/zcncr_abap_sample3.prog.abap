@@ -103,5 +103,5 @@ START-OF-SELECTION.
       iv_status      = zcl_cncr_thread_pool=>finished
   ).
 
-  BREAK-POINT.
+*  BREAK-POINT.
 *  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).
