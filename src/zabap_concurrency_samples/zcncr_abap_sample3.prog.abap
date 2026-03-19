@@ -104,4 +104,9 @@ START-OF-SELECTION.
   ).
 
 *  BREAK-POINT.
+
+  LOOP AT lo_thread_pool->mt_runnable ASSIGNING FIELD-SYMBOL(<ls_runnable>).
+    WRITE /: <ls_runnable>-que_nr , <ls_runnable>-status, <ls_runnable>-thread_group, <ls_runnable>-thread_name.
+  ENDLOOP.
+
 *  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).

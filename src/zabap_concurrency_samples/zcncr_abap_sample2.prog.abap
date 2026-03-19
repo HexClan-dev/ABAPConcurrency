@@ -93,30 +93,30 @@ START-OF-SELECTION.
 
       lo_result_main ?= lo_runn1->get_result( ).
       WRITE: 'The process ended successfully!'.
-      WRITE: /, 'Fibonaci sequence 1 is ',
-                lo_result_main->mv_value ,
-                '  Execution Time : ',
-                lo_runn1->get_execution_time( ).
-
+*      WRITE: /, 'Fibonaci sequence 1 is ',
+*                lo_result_main->mv_value ,
+*                '  Execution Time : ',
+*                lo_runn1->get_execution_time( ).
+*
       lo_result_main ?= lo_runn2->get_result( ).
-      WRITE: /, 'Fibonaci sequence 2 is ',
-                lo_result_main->mv_value ,
-                '  Execution Time : ',
-                lo_runn2->get_execution_time( ).
-
+*      WRITE: /, 'Fibonaci sequence 2 is ',
+*                lo_result_main->mv_value ,
+*                '  Execution Time : ',
+*                lo_runn2->get_execution_time( ).
+*
       lo_result_main ?= lo_runn3->get_result( ).
-      WRITE: /, 'Fibonaci sequence 3 is ',
-                lo_result_main->mv_value ,
-                '  Execution Time : ',
-                lo_runn3->get_execution_time( ).
-
+*      WRITE: /, 'Fibonaci sequence 3 is ',
+*                lo_result_main->mv_value ,
+*                '  Execution Time : ',
+*                lo_runn3->get_execution_time( ).
+*
       DATA(lv_exec_time) = lo_exec_time->get_runtime( ) - lv_start_time.
-
-*  lo_runn4 ?= lo_thread4->get_result( ).
-*  WRITE: /, 'Fibonaci sequence 4 is ', lo_runn4->mv_value.
-      DATA(lv_thread_exec_time) = lo_runn1->get_execution_time( ) + lo_runn2->get_execution_time( ) + lo_runn3->get_execution_time( ).
-      WRITE: /, 'Total Sum Thread Execution Time : ',
-                lv_thread_exec_time .
+*
+**  lo_runn4 ?= lo_thread4->get_result( ).
+**  WRITE: /, 'Fibonaci sequence 4 is ', lo_runn4->mv_value.
+*      DATA(lv_thread_exec_time) = lo_runn1->get_execution_time( ) + lo_runn2->get_execution_time( ) + lo_runn3->get_execution_time( ).
+*      WRITE: /, 'Total Sum Thread Execution Time : ',
+*                lv_thread_exec_time .
 
       WRITE: /, 'Execution time : ',
                 lv_exec_time.

@@ -75,8 +75,10 @@ CLASS zcl_cncr_async_task IMPLEMENTATION.
   METHOD run.
     me->mv_task_name = iv_task_name.
 
+    " Serialize the Object for running in background
     DATA(lo_serialized) = zcl_cncr_thread=>serialize( io_runnable = me->mo_runnable ).
 
+    " Run The Async Task
     IF iv_group IS INITIAL.
       rv_is_running =  me->run_rfc( io_serialized = lo_serialized   iv_task_name  = iv_task_name ).
     ELSE.

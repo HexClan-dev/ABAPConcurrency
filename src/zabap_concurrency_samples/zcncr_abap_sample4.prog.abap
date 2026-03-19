@@ -1,9 +1,9 @@
 *&---------------------------------------------------------------------*
-*& Report zcncr_abap_sample1
+*& Report zcncr_abap_sample4
 *&---------------------------------------------------------------------*
 *&
 *&---------------------------------------------------------------------*
-REPORT zcncr_abap_sample1.
+REPORT zcncr_abap_sample4.
 
 
 
@@ -31,7 +31,6 @@ CLASS lcl_main IMPLEMENTATION.
 
   METHOD zif_cncr_runnable~run.
 
-    " Calculate the Fibonaci method
     mv_value = me->calculate_fibonaci(
       EXPORTING
         iv_index       = mv_fibonaci
@@ -71,53 +70,40 @@ CLASS lcl_main IMPLEMENTATION.
 ENDCLASS.
 
 
-
 START-OF-SELECTION.
-
   DATA(lo_exec_time) = cl_abap_runtime=>create_hr_timer( ).
   DATA(lv_start_time) = lo_exec_time->get_runtime( ).
 
-  DATA(lo_runn1) = NEW lcl_main( ).
-  lo_runn1->mv_fibonaci = 35.
-  DATA(lo_thread) = NEW zcl_cncr_thread( lo_runn1 ).
+  DATA(lo_thread_pool) = NEW zcl_cncr_thread_pool( 3 ).
 
-  DATA(lo_runn2) = NEW lcl_main( ).
-  lo_runn2->mv_fibonaci = 36.
-  DATA(lo_thread2) = NEW zcl_cncr_thread( lo_runn2 ).
+  DATA(lo_test_f1) = NEW lcl_main( ).
+  lo_test_f1->mv_value = 40.
+  DATA(lo_test_f2) = NEW lcl_main( ).
+  lo_test_f2->mv_value = 36.
+  DATA(lo_test_f3) = NEW lcl_main( ).
+  lo_test_f3->mv_value = 40.
 
-  DATA(lo_runn3) = NEW lcl_main( ).
-  lo_runn3->mv_fibonaci = 37.
-  DATA(lo_thread3) = NEW zcl_cncr_thread( lo_runn3 ).
+  DATA(lv_thread_name1) = lo_thread_pool->add_thread( io_runnable = lo_test_f1 ).
 
-  lo_thread->start( ).
-  lo_thread2->start( ).
-  lo_thread3->start( ).
+  lo_thread_pool->add_thread( io_runnable = lo_test_f2 ).
 
-  lo_runn1 ?= lo_thread->get_result( ).
-  WRITE: 'The process ended successfully!'.
-  WRITE: /, 'Fibonaci sequence 1 is ',
-            lo_runn1->mv_value ,
-            '  Execution Time : ',
-            lo_thread->get_execution_time( ).
+  lo_thread_pool->add_thread( iv_thread_name = 'Thread3'
+                              io_runnable    = lo_test_f3 ).
 
-  lo_runn2 ?= lo_thread2->get_result( ).
-  WRITE: /, 'Fibonaci sequence 2 is ',
-            lo_runn2->mv_value ,
-            '  Execution Time : ',
-            lo_thread2->get_execution_time( ).
+  lo_thread_pool->execute( ).
 
-  lo_runn3 ?= lo_thread3->get_result( ).
-  WRITE: /, 'Fibonaci sequence 3 is ',
-            lo_runn3->mv_value ,
-            '  Execution Time : ',
-            lo_thread3->get_execution_time( ).
+  lo_thread_pool->wait_for_all( ).
+*  lo_thread_pool->wait_for(
+*    EXPORTING
+*      iv_thread_name = lv_thread_name1
+*      iv_status      = zcl_cncr_thread_pool=>finished
+*  ).
 
-  DATA(lv_exec_time) = lo_exec_time->get_runtime( ) - lv_start_time.
+*  BREAK-POINT.
+*  cl_demo_output=>display_data( lo_thread_pool->mt_runnable[] ).
 
+  DATA(lv_end_time) = lo_exec_time->get_runtime( ).
+  DATA(lv_exec_time) = lv_end_time - lv_start_time.
 
-  DATA(lv_thread_exec_time) = lo_thread->get_execution_time( ) + lo_thread2->get_execution_time( ) + lo_thread3->get_execution_time( ).
-  WRITE: /, 'Total Sum Thread Execution Time : ',
-            lv_thread_exec_time .
-
-  WRITE: /, 'Execution time : ',
-            lv_exec_time.
+  WRITE 'The process ended successfully!'.
+  WRITE: /, 'Execution time : ', lv_exec_time.
